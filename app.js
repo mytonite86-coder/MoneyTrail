@@ -1,6 +1,7 @@
 // Data Model
 let transactions = [];
 let currentFilter = 'all';
+let isPremium = false;
 
 // DOM Elements
 const descInput = document.getElementById('desc');
@@ -12,6 +13,13 @@ const filterButtons = document.querySelectorAll('.filter-btn');
 const totalBalanceSpan = document.getElementById('totalBalance');
 const netAmountSpan = document.getElementById('netAmount');
 const fabBtn = document.getElementById('fabBtn');
+const exportBtn = document.getElementById('exportBtn');
+const premiumModal = document.getElementById('premiumModal');
+const purchaseBtn = document.getElementById('purchaseBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const topAdContainer = document.getElementById('topAdContainer');
+const bottomAdContainer = document.getElementById('bottomAdContainer');
+const premiumBadge = document.getElementById('premiumBadge');
 
 // Initialize from localStorage
 function loadTransactions() {
@@ -19,11 +27,27 @@ function loadTransactions() {
   if (saved) {
     transactions = JSON.parse(saved);
   }
+  
+  const premiumStatus = localStorage.getItem('moneytrail_premium');
+  if (premiumStatus === 'true') {
+    isPremium = true;
+    updatePremiumUI();
+  }
 }
 
 // Save to localStorage
 function saveTransactions() {
   localStorage.setItem('moneytrail_transactions', JSON.stringify(transactions));
+}
+
+// Update Premium UI
+function updatePremiumUI() {
+  if (isPremium) {
+    topAdContainer.style.display = 'none';
+    bottomAdContainer.style.display = 'none';
+    premiumBadge.classList.remove('hidden');
+    exportBtn.style.display = 'inline-flex';
+  }
 }
 
 // Add transaction
@@ -73,6 +97,32 @@ function getFilteredTransactions() {
   return transactions.filter(t => t.type === currentFilter);
 }
 
+// Export to CSV
+function exportToCSV() {
+  if (transactions.length === 0) {
+    alert('No transactions to export.');
+    return;
+  }
+
+  const headers = ['Date', 'Description', 'Type', 'Amount', 'Balance'];
+  let balance = 0;
+  const rows = [headers];
+
+  transactions.reverse().forEach(t => {
+    balance += t.type === 'income' ? t.amount : -t.amount;
+    rows.push([t.date, t.desc, t.type, `$${t.amount.toFixed(2)}`, `$${balance.toFixed(2)}`]);
+  });
+  transactions.reverse();
+
+  let csv = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `MoneyTrail-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
 // Render transactions
 function render() {
   const filtered = getFilteredTransactions();
@@ -116,9 +166,30 @@ filterButtons.forEach(btn => {
   });
 });
 
+// Premium Modal
+purchaseBtn.addEventListener('click', () => {
+  // Simulates purchase (in real app, use Google Play Billing or App Store)
+  isPremium = true;
+  localStorage.setItem('moneytrail_premium', 'true');
+  premiumModal.classList.add('hidden');
+  updatePremiumUI();
+  alert('🎉 Premium activated! Ads removed and export unlocked.');
+});
+
+closeModalBtn.addEventListener('click', () => {
+  premiumModal.classList.add('hidden');
+});
+
 // Event listeners
 addBtn.addEventListener('click', addTransaction);
 fabBtn.addEventListener('click', () => descInput.focus());
+exportBtn.addEventListener('click', () => {
+  if (!isPremium) {
+    premiumModal.classList.remove('hidden');
+  } else {
+    exportToCSV();
+  }
+});
 
 descInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') addTransaction();
