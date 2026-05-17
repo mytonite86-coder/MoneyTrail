@@ -1,0 +1,19 @@
+{
+  "name": "moneytrail",
+  "version": "1.0.0",
+  "description": "A simple pocket ledger app for tracking income and expenses",
+  "main": "index.html",
+  "scripts": {
+    "start": "open index.html",
+    "deploy": "git push origin main"
+  },
+  "keywords": [
+    "ledger",
+    "tracker",
+    "expense",
+    "income",
+    "finance"
+  ],
+  "author": "mytonite86-coder",
+  "license": "MIT"
+}
